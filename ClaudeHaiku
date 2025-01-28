@@ -1,0 +1,79 @@
+!pip install boto3
+
+import os
+os.environ['AWS_ACCESS_KEY_ID'] = 'access_key'
+os.environ['AWS_SECRET_ACCESS_KEY'] = 'secret_key'
+os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
+
+bedrock_client = boto3.client('bedrock-runtime')
+
+# Initialize an S3 client
+s3_client = boto3.client('s3')
+
+# Try to list the S3 buckets in your account
+try:
+    response = s3_client.list_buckets()
+    print("Successfully connected to AWS!")
+    print("List of S3 Buckets:")
+    for bucket in response['Buckets']:
+        print(f"- {bucket['Name']}")
+except Exception as e:
+    print(f"Error connecting to AWS: {e}")
+
+
+import json
+
+# Initialize the AWS Bedrock client for Claude 3.5 Haiku
+bedrock_client = boto3.client('bedrock-runtime', region_name='us-east-1')
+
+# Define the model ID
+model_id = 'us.anthropic.claude-3-5-haiku-20241022-v1:0'
+
+def translate_with_claude(input_text):
+    """
+    Translates the input text using Claude Haiku.
+    """
+    input_data = {
+        "anthropic_version": "bedrock-2023-05-31",  # Model version
+        "max_tokens": 200,  # Max tokens for response
+        "temperature": 1,  # Control randomness of the response
+        "top_p": 0.999,  # Optional: for nucleus sampling
+        "messages": [
+            {
+                "role": "user",  # User's input
+                "content": [
+                    {
+                        "type": "text",  # Type of content
+                        "text": f"Translate this to Bengali: {input_text}"  # Input text
+                    }
+                ]
+            }
+        ]
+    }
+
+    try:
+        # Send request to invoke the model
+        response = bedrock_client.invoke_model(
+            body=json.dumps(input_data),
+            modelId=model_id,
+            accept='application/json',
+            contentType='application/json'
+        )
+
+        # Parse the response from the model
+        response_body = json.loads(response['body'].read())
+
+        # Extract the translated text from the response
+        translated_text = response_body.get('content', [])[0].get('text', 'Unable to translate.')
+
+        return translated_text
+
+    except Exception as e:
+        return f"Error translating text: {str(e)}"
+
+# Example input sentence for translation
+input_sentence = "input your sentence"
+
+# Get the translation from Claude Haiku
+translated_sentence = translate_with_claude(input_sentence)
+print(f"Translated sentence: {translated_sentence}")
