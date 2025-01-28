@@ -1,0 +1,72 @@
+!pip install boto3
+
+import os
+os.environ['AWS_ACCESS_KEY_ID'] = 'access_key'
+os.environ['AWS_SECRET_ACCESS_KEY'] = 'secret_key'
+os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
+
+import boto3
+
+bedrock_client = boto3.client('bedrock-runtime')
+
+import boto3
+import json
+
+# Initialize the AWS Bedrock client for Claude 3.5 Sonnet
+bedrock_client = boto3.client('bedrock-runtime', region_name='us-east-1')
+
+# Define the model ID for Claude 3.5 Sonnet
+model_id = 'us.anthropic.claude-3-5-sonnet-20241022-v2:0'  # Update this if it's different
+
+# Define an ARN, if it needs to be specified somewhere
+arn = 'arn:aws:bedrock:us-east-1:388372864657:inference-profile/us.anthropic.claude-3-5-sonnet-20241022-v2:0'  # Update with your actual ARN
+
+def translate_with_claude(input_text):
+    """
+    Translates the input text using Claude Sonnet.
+    """
+    input_data = {
+        "anthropic_version": "bedrock-2023-05-31",  # Model version
+        "max_tokens": 200,  # Max tokens for response
+        "temperature": 0,  # Control randomness of the response
+        "top_p": 0.8,  # Optional: for nucleus sampling
+        "messages": [
+            {
+                "role": "user",  # User's input
+                "content": [
+                    {
+                        "type": "text",  # Type of content
+                        "text": f"Translate this to Bengali: {input_text}"  # Input text
+                    }
+                ]
+            }
+        ]
+    }
+
+    try:
+        # Send request to invoke the model using the modelId and possibly refer to ARN in your setup
+        response = bedrock_client.invoke_model(
+            body=json.dumps(input_data),
+            modelId=model_id,  # Use the modelId parameter
+            accept='application/json',
+            contentType='application/json'
+            # ARN might be used here if the API supported it, but typically it does not go here
+        )
+
+        # Parse the response from the model
+        response_body = json.loads(response['body'].read())
+
+        # Extract the translated text from the response
+        translated_text = response_body.get('content', [])[0].get('text', 'Unable to translate.')
+
+        return translated_text
+
+    except Exception as e:
+        return f"Error translating text: {str(e)}"
+
+# Example input sentence for translation
+input_sentence = "Could you please turn down the music?"  # Provide a sentence here to translate
+
+# Get the translation from Claude Sonnet
+translated_sentence = translate_with_claude(input_sentence)
+print(f"Translated sentence: {translated_sentence}")
