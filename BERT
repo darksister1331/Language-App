@@ -1,0 +1,37 @@
+pip install transformers torch
+
+from huggingface_hub import login
+
+login(token="your_token")
+
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
+# Load the tokenizer and model for English to Bengali translation
+model_name = "shhossain/opus-mt-en-to-bn"  # English to Bengali translation model
+
+# Load the tokenizer and model
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+
+# Function to translate English to Bengali
+def translate_en_to_bn(english_text):
+    # Tokenize the input English text
+    inputs = tokenizer(english_text, return_tensors="pt", padding=True, truncation=True)
+
+    # Generate the translation from English to Bengali
+    translated = model.generate(**inputs)
+
+    # Decode and return the translated text
+    translated_text = tokenizer.decode(translated[0], skip_special_tokens=True)
+    return translated_text
+
+# Input English text
+english_text = "Hello, how are you?"
+
+# Get the Bengali translation
+bengali_translation = translate_en_to_bn(english_text)
+
+# Print the result
+print(f"English text: {english_text}")
+print(f"Bengali translation: {bengali_translation}")
+
